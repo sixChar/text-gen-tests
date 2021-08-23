@@ -1,11 +1,10 @@
 from dotenv import  dotenv_values
 from models import *
 import numpy as np
+import os
 
 
-
-
-
+CKPT_DIR_PATH = './model_ckpts' 
 DATA_PATH = dotenv_values(".env")['BLOG_DATA_PATH']
 TEST_TEXT = 'Today '
 
@@ -40,7 +39,7 @@ def load_data(text_only=False):
     return heads, texts
 
 
-def get_batch(texts, seq_length, batch_size=8, batch_axis=1):
+def get_batch(texts, seq_length, batch_size=4, batch_axis=1):
   batch_xs = []
   batch_ys = []
   for i in range(batch_size):
@@ -63,13 +62,36 @@ def get_batch(texts, seq_length, batch_size=8, batch_axis=1):
           np.concatenate(batch_ys, axis=batch_axis).astype(np.float32))
 
 
-def train_model(model, data, epochs, min_seq=16, max_seq=512):
+def train_model(model, data, epochs=1, min_seq=16, max_seq=512, save_model=False, load_model=True, 
+                ckpt_fname=None, steps_p_save=100, steps_p_test=100):
   num_steps = int(len(data) * epochs)
+  if save_model or load_model:
+    # Create save folder if it doesn't exist
+    if not os.path.isdir(CKPT_DIR_PATH):
+      print("Checkpoint directory not found. Creating directory: %s"%CKPT_DIR_PATH)
+      os.mkdir(CKPT_DIR_PATH)
+    # If checkpoint name not given use model class name as default.
+    if not ckpt_fname:
+      ckpt_fname = model.__class__.__name__ + '.pt'
+    # Path to the checkpoint file to save to/ load from.
+    ckpt_path = CKPT_DIR_PATH + '/' + ckpt_fname
 
   loss = torch.nn.MSELoss()
   opt = torch.optim.Adam(model.parameters(), lr=1e-4)
 
-  for step in range(num_steps):
+  start_step = 0
+  if load_model:
+    if os.path.isfile(ckpt_path):
+      checkpoint = torch.load(ckpt_path)
+      model.load_state_dict(checkpoint['model_state_dict'])
+      opt.load_state_dict(checkpoint['optimizer_state_dict'])
+      start_step = checkpoint['step']
+      print('Loaded model from %s.'%ckpt_path)
+    else:
+      print('CANNOT LOAD MODEL. NO CHEKCPOINT FILE AT %s'%ckpt_path)
+      
+
+  for step in range(start_step, num_steps):
     batch_xs, batch_ys = get_batch(data, np.random.randint(min_seq, max_seq))
     x = torch.from_numpy(batch_xs)
     y_ = torch.from_numpy(batch_ys)
@@ -82,18 +104,26 @@ def train_model(model, data, epochs, min_seq=16, max_seq=512):
     l.backward()
     opt.step()
 
-    if step % 100 == 0:
+    if step % steps_p_test == 0:
       test_gen = generate_text(model, TEST_TEXT, 256)
       print("Step: %i (%.2f pct) \nSample: %s\n"%(step, (step/num_steps), test_gen))
 
-  
+    if save_model and step % steps_p_save == 0 and step != start_step:      
+      print("Saving model ... ", end='')
+      torch.save({'step':step,
+                  'model_state_dict': model.state_dict(),
+                  'optimizer_state_dict': opt.state_dict(),
+                  'loss': loss
+                 }, ckpt_path)
+      print("done.")
+        
 
 
 if __name__=="__main__":
   data = load_data(text_only=True)
 
-  model = LSTMModel()
+  model = LinTransformerModel()
 
-  train_model(model, data, 4)
+  train_model(model, data, save_model=True)
 
 

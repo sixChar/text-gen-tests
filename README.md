@@ -4,9 +4,8 @@ Several different text models implemented in pytorch and trained on the [Blog Au
 
 ## Models implemented:
 - LSTM
+- Linear Transformer (sort of, it's very simplified and does much worse than LSTM but it's still learning a bit so I'm counting it)
 
 ## TODO:
-- Implement saving
-- Implement linear transformer model
 - Implement a more complicated fast weight programmer model
 - (Maybe) Implement a self programmin fast weight programmer model
