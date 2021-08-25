@@ -8,4 +8,4 @@ Several different text models implemented in pytorch and trained on the [Blog Au
 
 ## TODO:
 - Implement a more complicated fast weight programmer model
-- (Maybe) Implement a self programmin fast weight programmer model
+- (Maybe) Implement a self programming fast weight programmer model
