@@ -39,7 +39,7 @@ def load_data(text_only=False):
     return heads, texts
 
 
-def get_batch(texts, seq_length, batch_size=4, batch_axis=1):
+def get_batch(texts, seq_length, batch_size=1, batch_axis=1):
   batch_xs = []
   batch_ys = []
   for i in range(batch_size):
@@ -122,7 +122,7 @@ def train_model(model, data, epochs=1, min_seq=16, max_seq=512, save_model=False
 if __name__=="__main__":
   data = load_data(text_only=True)
 
-  model = LinTransformerModel()
+  model = FF_FF_FWPModel(128,128)  
 
   train_model(model, data, save_model=True)
 
