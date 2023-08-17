@@ -8,5 +8,3 @@ Several different text models implemented in pytorch and trained on the [Blog Au
 - Fast weight programmer model with feed forward slow and fast nets.
 - Fast weight programmer model with LSTM slow net and feed forward fast net.
 
-## TODO:
-- Implement a self programming fast weight programmer model
